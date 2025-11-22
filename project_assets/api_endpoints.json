@@ -1,0 +1,18 @@
+{
+  "endpoints": {
+    "POST /api/v1/cart/add": {
+      "description": "Adds an item to the cart",
+      "payload": { "item_id": "integer", "quantity": "integer" }
+    },
+    "POST /apply_coupon": {
+      "description": "Validates discount code",
+      "payload": { "code": "string" },
+      "response": { "success": true, "new_total": "float" }
+    },
+    "POST /submit_order": {
+      "description": "Finalizes purchase",
+      "payload": { "name": "string", "email": "string", "address": "string", "payment_method": "string" }
+    }
+  }
+}
+

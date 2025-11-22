@@ -1,0 +1,13 @@
+UI/UX Guidelines for Checkout Page
+
+1. Validation Messages:
+   - All form validation errors (e.g., missing name, invalid email) must be displayed in RED text.
+   - Error messages should appear immediately below the input field.
+
+2. Buttons:
+   - The "Pay Now" button must be colored GREEN (#008000 or similar) to indicate the primary action.
+   - "Add to Cart" buttons should be clearly visible.
+
+3. Success Feedback:
+   - Upon successful form submission, the system must display the message "Payment Successful!"
+   - The success message needs to be distinct and visible without reloading the page.
