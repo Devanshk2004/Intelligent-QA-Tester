@@ -1,18 +1,17 @@
 import os
 import tempfile
-from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredMarkdownLoader, JSONLoader
+from langchain_community.document_loaders import PyPDFLoader, TextLoader, UnstructuredMarkdownLoader
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import BSHTMLLoader
 
 embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
 DB_DIR = "chroma_db"
 
 def process_and_store_documents(uploaded_files):
-
     documents = []
+    html_content = "" 
     
     for file in uploaded_files:
         file_extension = os.path.splitext(file.name)[1].lower()
@@ -32,7 +31,9 @@ def process_and_store_documents(uploaded_files):
             elif file_extension == ".json":
                 loader = TextLoader(temp_path, encoding="utf-8")
             elif file_extension == ".html":
-                loader = BSHTMLLoader(temp_path) 
+                loader = BSHTMLLoader(temp_path)
+                with open(temp_path, "r", encoding="utf-8") as f:
+                    html_content = f.read()
 
             if loader:
                 docs = loader.load()
@@ -42,12 +43,11 @@ def process_and_store_documents(uploaded_files):
         
         except Exception as e:
             print(f"Error processing {file.name}: {e}")
-        
         finally:
             os.remove(temp_path)
 
     if not documents:
-        return "No documents processed."
+        return "No documents processed.", None
 
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = text_splitter.split_documents(documents)
@@ -58,4 +58,4 @@ def process_and_store_documents(uploaded_files):
         persist_directory=DB_DIR
     )
     
-    return f"Success! Processed {len(documents)} documents into {len(chunks)} chunks."
+    return f"Success! Processed {len(documents)} documents.", html_content

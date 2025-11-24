@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Shop Checkout</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .container { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        .item { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding: 10px 0; }
+        .error { color: red; font-size: 0.9em; display: none; } /* Validation Error Rule */
+        .success { color: green; font-weight: bold; display: none; margin-top: 20px; }
+        button#pay-now { background-color: green; color: white; padding: 10px 20px; border: none; cursor: pointer; width: 100%; font-size: 16px; } /* UI Rule */
+        button:disabled { background-color: #ccc; }
+        input, select { padding: 8px; margin-top: 5px; width: 100%; box-sizing: border-box; }
+        .row { display: flex; gap: 20px; margin-bottom: 15px; }
+        .col { flex: 1; }
+        label { font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Checkout Page</h1>
+
+    <h3>Your Cart</h3>
+    <div id="cart-items">
+        <div class="item">
+            <span>Wireless Mouse</span>
+            <button onclick="addToCart(25)">Add to Cart ($25)</button>
+        </div>
+        <div class="item">
+            <span>Mechanical Keyboard</span>
+            <button onclick="addToCart(80)">Add to Cart ($80)</button>
+        </div>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 10px; background: #f9f9f9;">
+        <p>Cart Total: $<span id="cart-total">0</span></p>
+        <label>Discount Code:</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="discount-code" placeholder="Enter code">
+            <button id="apply-discount" onclick="applyDiscount()" style="width: auto;">Apply</button>
+        </div>
+        <p id="discount-msg" style="font-size: 0.9em;"></p>
+    </div>
+
+    <hr>
+
+    <h3>Shipping Details</h3>
+    <form id="checkout-form" onsubmit="event.preventDefault(); validateAndPay();">
+        <div class="row">
+            <div class="col">
+                <label>Full Name</label>
+                <input type="text" id="name" required>
+                <span class="error" id="name-error">Name is required</span>
+            </div>
+            <div class="col">
+                <label>Email</label>
+                <input type="email" id="email" required>
+                <span class="error" id="email-error">Invalid email format</span>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col">
+                <label>Address</label>
+                <input type="text" id="address" required>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label>Shipping Method</label><br>
+                <input type="radio" name="shipping" value="standard" style="width:auto;" checked> Standard (Free)<br>
+                <input type="radio" name="shipping" value="express" style="width:auto;"> Express ($10)
+            </div>
+            <div class="col">
+                <label>Payment Method</label><br>
+                <input type="radio" name="payment" value="card" style="width:auto;" checked> Credit Card<br>
+                <input type="radio" name="payment" value="paypal" style="width:auto;"> PayPal
+            </div>
+        </div>
+
+        <button type="submit" id="pay-now">Pay Now</button>
+    </form>
+    
+    <div id="success-msg" class="success">Payment Successful!</div>
+</div>
+
+
+<script>
+    let total = 0;
+    let discountApplied = false;
+
+    function addToCart(price) {
+        total += price;
+        updateTotal();
+    }
+
+    function updateTotal() {
+        document.getElementById('cart-total').innerText = total;
+    }
+
+    function applyDiscount() {
+        const code = document.getElementById('discount-code').value;
+        const msg = document.getElementById('discount-msg');
+        
+        if (code === 'SAVE15' && !discountApplied) {
+            total = total * 0.85; 
+            discountApplied = true;
+            msg.style.color = 'green';
+            msg.innerText = 'Coupon Applied: 15% Off';
+            updateTotal();
+        } else if (code !== 'SAVE15') {
+            msg.style.color = 'red';
+            msg.innerText = 'Invalid Coupon';
+        }
+    }
+
+    function validateAndPay() {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const btn = document.getElementById('pay-now');
+        const successMsg = document.getElementById('success-msg');
+        
+        let valid = true;
+
+        // Reset errors
+        document.getElementById('name-error').style.display = 'none';
+        document.getElementById('email-error').style.display = 'none';
+        successMsg.style.display = 'none'; 
+
+        if(name === "") {
+            document.getElementById('name-error').style.display = 'block';
+            valid = false;
+        }
+
+        if(email === "" || !email.includes('@')) {
+            document.getElementById('email-error').style.display = 'block';
+            valid = false;
+        }
+
+        if(valid) {
+            btn.innerText = "Processing...";
+            btn.disabled = true;
+
+            setTimeout(() => {
+                successMsg.style.display = 'block';
+                successMsg.style.textAlign = 'center'; 
+                
+                successMsg.innerHTML = `Payment Successful!<br>
+                                        <span style="
+                                            font-size: 1.3em; 
+                                            font-weight: bold;
+                                            color: #333; 
+                                            border: 2px solid #4CAF50; 
+                                            background-color: #f1f1f1;
+                                            padding: 20px 40px; 
+                                            display: inline-block; 
+                                            margin-top: 20px; 
+                                            border-radius: 10px;
+                                            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                                        ">
+                                        $${total} Paid
+                                        </span>`;
+                
+                
+                btn.innerText = "Paid";
+            }, 1500); // 1.5 seconds delay
+        }
+    }
+</script>
+
+</body>
+</html>
