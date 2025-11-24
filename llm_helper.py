@@ -6,7 +6,6 @@ from langchain_huggingface import HuggingFaceEmbeddings
 
 load_dotenv() 
 
-# Configuration
 MODEL_NAME = "gemini-2.5-flash" 
 
 def get_vector_store():
@@ -27,7 +26,6 @@ def ask_bot(query, api_key=None):
         docs = vectorstore.similarity_search(query, k=3)
         context_text = "\n\n".join([doc.page_content for doc in docs])
 
-        # --- STRICT TABLE PROMPT ---
         full_prompt = f"""
         Act as a QA Test Case Generator.
         Based on the Context provided, generate a Test Case table for the User Request.
