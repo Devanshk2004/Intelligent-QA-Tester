@@ -17,12 +17,9 @@ def get_vector_store():
     return Chroma(persist_directory="chroma_db", embedding_function=embedding_model)
 
 def ask_bot(query, api_key=None):
-    """Phase 2: Test Case Generation"""
+    """Phase 2: Test Case Generation (Fixed for Clean Table)"""
     try:
-        # 1. Init Client
-        client = genai.Client(api_key=api_key) # uses env if api_key is None
-
-        # 2. Retrieve Context
+        client = genai.Client(api_key=api_key)
         vectorstore = get_vector_store()
         if not vectorstore:
             return "Knowledge Base not found. Please build it first."
@@ -30,15 +27,10 @@ def ask_bot(query, api_key=None):
         docs = vectorstore.similarity_search(query, k=3)
         context_text = "\n\n".join([doc.page_content for doc in docs])
 
-        # 3. Prompt
-        full_prompt = f"""You are an expert QA Automation Engineer.
-        Your task is to generate comprehensive Test Cases based STRICTLY on the provided context.
-
-        GUIDELINES:
-        1. Use ONLY the provided context. Do not invent features.
-        2. Format the output as a Markdown Table.
-        3. The table MUST have these columns: Test_ID, Feature, Test_Scenario, Expected_Result, Grounded_In.
-        4. 'Grounded_In' column must cite the specific document name.
+        # --- STRICT TABLE PROMPT ---
+        full_prompt = f"""
+        Act as a QA Test Case Generator.
+        Based on the Context provided, generate a Test Case table for the User Request.
 
         CONTEXT:
         {context_text}
@@ -46,7 +38,12 @@ def ask_bot(query, api_key=None):
         USER REQUEST:
         {query}
 
-        ANSWER (Markdown Table):
+        STRICT OUTPUT RULES:
+        1. Output ONLY a Markdown Table.
+        2. Do NOT write any introductory text (like "Here are the test cases").
+        3. Do NOT write any conclusion or explanations.
+        4. The Table MUST have these exact columns: | Test_ID | Feature | Test_Scenario | Expected_Result | Grounded_In |
+        5. Write all text in simple text format
         """
 
         response = client.models.generate_content(
@@ -58,41 +55,32 @@ def ask_bot(query, api_key=None):
         return f"Error: {str(e)}"
 
 def generate_selenium_script(test_case, html_code, api_key=None):
-    """Phase 3: Selenium Script Generation (Now with RAG!)"""
+    """Phase 3: Selenium Script Generation (Smart & Concise)"""
     try:
         client = genai.Client(api_key=api_key)
         
         vectorstore = get_vector_store()
         doc_context = ""
         if vectorstore:
-
             docs = vectorstore.similarity_search(test_case, k=2)
             doc_context = "\n\n".join([doc.page_content for doc in docs])
         
+        # --- SMART & CONCISE PROMPT ---
         prompt = f"""
-        You are a Senior QA Automation Engineer.
+        Act as a QA Automation Expert. Write a Python Selenium script.
         
-        TASK:
-        Write a Python Selenium script for this specific Test Case.
-        
-        TEST CASE:
-        "{test_case}"
-        
-        RELEVANT DOCUMENTATION (Logic/Rules):
-        {doc_context}
-        
-        TARGET HTML SOURCE (For IDs/Selectors):
+        TEST CASE: "{test_case}"
+        RULES: {doc_context}
+        HTML:
         ```html
         {html_code}
         ```
         
-        STRICT REQUIREMENTS:
-        1. Use 'webdriver.Chrome()'.
-        2. Assume 'checkout.html' is in the local folder: driver.get("file:///absolute/path/to/checkout.html") (Use os.getcwd + checkout.html).
-        3. Use the Logic from Documentation (e.g., if doc says code is SAVE15, use SAVE15).
-        4. Use IDs/Classes from the provided HTML.
-        5. Add assertions to verify the Expected Result.
-        6. Return ONLY the Python code block.
+        REQUIREMENTS:
+        1. **Setup:** Use `webdriver_manager` to install Chrome driver.
+        2. **Path:** Check if 'checkout.html' is in the current folder OR 'project_assets' folder. Load the one found.
+        3. **Code:** Use `webdriver.Chrome()`, `WebDriverWait`, and Assertions.
+        4. **Output:** Return ONLY the Python code block.
         """
         
         response = client.models.generate_content(
