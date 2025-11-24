@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import shutil
 from vector_db import process_and_store_documents
+from llm_helper import ask_bot 
 
 st.set_page_config(page_title="Autonomous QA Agent", layout="wide")
 
@@ -32,7 +33,21 @@ with st.sidebar:
         else:
             st.warning("Please upload files first!")
 
-if st.session_state.get("kb_ready"):
-    st.info("✅ Knowledge Base is Ready! You can now proceed to Test Case Generation.")
-else:
-    st.info("👈 Please upload documents in the sidebar to start.")
+if not os.path.exists("chroma_db"):
+    st.info("👈 Please upload documents in the sidebar and click 'Build Knowledge Base' to start.")
+    st.stop() 
+
+st.divider()
+st.subheader("🕵️ Test Case Generator Agent")
+st.caption("Ask the AI to generate test cases based on your uploaded documents.")
+
+user_query = st.chat_input("Ex: Generate test cases for discount code feature...")
+
+if user_query:
+    with st.chat_message("user"):
+        st.write(user_query)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking..."):
+            response = ask_bot(user_query)
+            st.markdown(response)
